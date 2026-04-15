@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/bin/pip install *)",
+      "Bash(.venv/bin/python -m src.train_stage2 --dataset dataset.csv --test-n 500)"
+    ]
+  }
+}
