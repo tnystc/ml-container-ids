@@ -48,3 +48,7 @@ dataset.csv
 
 # Documentation
 *.md
+
+# Plot artifacts
+plots.py
+plots/

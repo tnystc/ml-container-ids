@@ -52,32 +52,40 @@ def load_dataset(path: str, sample_frac: float = None, chunksize: int = 200_000)
     return df
 
 
-def get_stage1_data(df: pd.DataFrame, test_size: float = 0.2, random_state: int = 42):
+def get_stage1_data(
+    df: pd.DataFrame,
+    test_size: float = 0.2,
+    random_state: int = 42,
+    scale: bool = True,
+    attack_labels: list = None,
+):
     """
-    Stage 1 (anomaly detection): binary split of normal (0) vs attack (1+).
-    OneClassSVM trains only on normal traffic.
+    Stage 1 (anomaly detection): normal (0) vs attack (1+).
 
-    Returns:
-        X_train_normal, X_test, y_test_binary, scaler
+    Args:
+        scale:          fit/apply StandardScaler (set False to test raw features)
+        attack_labels:  if given, restrict attacks in the test set to these original
+                        labels (e.g. [3,4,6,7,8] for exploit-only).
     """
     feature_cols = [c for c in df.columns if c != "Label"]
     X = df[feature_cols].values.astype(np.float32)
-    y = (df["Label"] > 0).astype(int).values  # 0=normal, 1=attack
+    orig_labels = df["Label"].values
+    y = (orig_labels > 0).astype(int)
 
-    scaler = StandardScaler()
-    X = scaler.fit_transform(X)
+    scaler = None
+    if scale:
+        scaler = StandardScaler()
+        X = scaler.fit_transform(X)
 
-    # Train split: normal-only for OneClassSVM, all classes for test
     idx_normal = np.where(y == 0)[0]
-    idx_all = np.arange(len(y))
-
-    # Split normal traffic for train/val
     train_idx, test_normal_idx = train_test_split(
         idx_normal, test_size=test_size, random_state=random_state
     )
 
-    # Test set: all attack samples + held-out normal samples
-    attack_idx = np.where(y == 1)[0]
+    if attack_labels is not None:
+        attack_idx = np.where(np.isin(orig_labels, attack_labels))[0]
+    else:
+        attack_idx = np.where(y == 1)[0]
     test_idx = np.concatenate([test_normal_idx, attack_idx])
 
     X_train_normal = X[train_idx]
@@ -93,6 +101,8 @@ def get_stage2_data(
     train_n_per_class: int = FEW_SHOT_TRAIN_N,
     test_n_per_class: int = None,
     random_state: int = 42,
+    include_normal: bool = False,
+    fit_scaler_on_all: bool = False,
 ):
     """
     Stage 2 (multi-class attack classification): classes in STAGE2_CLASSES only.
@@ -100,19 +110,33 @@ def get_stage2_data(
 
     Training is limited to train_n_per_class samples per class (few-shot constraint).
     test_n_per_class caps the test set per class (None = use all remaining).
-    For fair evaluation matching the report, set test_n_per_class to a fixed value
-    so the test set is balanced across classes.
+    For fair evaluation matching the report, set test_n_per_class to a fixed value.
+
+    Options:
+        include_normal:      add label 0 (normal) as an additional class
+        fit_scaler_on_all:   fit StandardScaler on the full dataset (all labels
+                             including normal) BEFORE filtering, so feature stats
+                             reflect the broader traffic distribution
 
     Returns:
         X_train, y_train, X_test, y_test, label_map, scaler
-        label_map: dict mapping original label -> new 0-indexed label
     """
-    df2 = df[df["Label"].isin(STAGE2_CLASSES)].copy()
+    classes = list(STAGE2_CLASSES)
+    if include_normal:
+        classes = [0] + classes
 
-    label_map = {orig: new for new, orig in enumerate(sorted(STAGE2_CLASSES))}
+    feature_cols = [c for c in df.columns if c != "Label"]
+
+    # Fit scaler on full unfiltered data if requested
+    if fit_scaler_on_all and scaler is None:
+        scaler = StandardScaler()
+        scaler.fit(df[feature_cols].values.astype(np.float32))
+
+    df2 = df[df["Label"].isin(classes)].copy()
+
+    label_map = {orig: new for new, orig in enumerate(sorted(classes))}
     df2["label_mapped"] = df2["Label"].map(label_map)
 
-    feature_cols = [c for c in df2.columns if c not in ("Label", "label_mapped")]
     X = df2[feature_cols].values.astype(np.float32)
     y = df2["label_mapped"].values
 

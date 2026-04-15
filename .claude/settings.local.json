@@ -2,7 +2,24 @@
   "permissions": {
     "allow": [
       "Bash(.venv/bin/pip install *)",
-      "Bash(.venv/bin/python -m src.train_stage2 --dataset dataset.csv --test-n 500)"
+      "Bash(.venv/bin/python -m src.train_stage2 --dataset dataset.csv --test-n 500)",
+      "Bash(.venv/bin/python -m src.train_stage1 --dataset dataset.csv)",
+      "Bash(tee /tmp/stage1.log)",
+      "Bash(.venv/bin/python -m src.train_stage2 --dataset dataset.csv --sample-frac 0.05 --test-n 100 --epochs 1 --epoch-size 100 --encoder mlp --distance cosine --k-shot 10)",
+      "Bash(.venv/bin/python -m src.train_stage2 --dataset dataset.csv --test-n 500 --encoder mlp --distance cosine --k-shot 10 --output models/stage2_mlp_cosine.pkl)",
+      "Bash(tee /tmp/stage2_mlp_cosine.log)",
+      "Bash(.venv/bin/python -m src.train_stage2 --dataset dataset.csv --test-n 80 --output models/stage2_testn80.pkl)",
+      "Bash(tee /tmp/stage2_testn80.log)",
+      "Bash(.venv/bin/python -m src.train_stage2 --dataset dataset.csv --test-n 500 --rf-balanced --output models/stage2_rfbal.pkl)",
+      "Bash(tee /tmp/stage2_rfbal.log)",
+      "Bash(.venv/bin/python -m src.train_stage2 --dataset dataset.csv --test-n 500 --output models/stage2_triple.pkl)",
+      "Bash(tee /tmp/stage2_triple.log)",
+      "Bash(.venv/bin/python -m src.train_stage1 --sample-frac 0.1 --model ocsvm-sigmoid --no-scale)",
+      "Bash(.venv/bin/python -m src.train_stage1 --sample-frac 0.1 --model iforest --nu 0.1 --no-scale)",
+      "Bash(.venv/bin/python -m src.train_stage1 --sample-frac 0.1 --model ocsvm-sigmoid --exploit-only)",
+      "Bash(.venv/bin/python -m src.train_stage1 --sample-frac 0.1 --model iforest --nu 0.1 --exploit-only)",
+      "Bash(.venv/bin/python -m src.train_stage1 --sample-frac 0.1 --model ocsvm-rbf --nu 0.1 --exploit-only)",
+      "Bash(.venv/bin/python -m src.train_stage1 --sample-frac 0.05 --model ocsvm-sigmoid --report-setup)"
     ]
   }
 }
