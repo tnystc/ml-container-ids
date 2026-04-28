@@ -83,6 +83,16 @@ def parse_args():
     p.add_argument("--n-query", type=int, default=10)
     p.add_argument("--embedding-dim", type=int, default=64)
 
+    p.add_argument("--smote", choices=["none", "smote", "borderline", "adasyn"],
+                   default="none",
+                   help="Apply SMOTE-family oversampling to the few-shot training set.")
+    p.add_argument("--smote-k", type=int, default=5,
+                   help="k_neighbors for SMOTE/Borderline/ADASYN (clipped to "
+                        "min_class_count - 1).")
+    p.add_argument("--smote-target", type=int, default=None,
+                   help="Target samples per class after oversampling (default: "
+                        "match the largest training class).")
+
     p.add_argument("--sweep", action="store_true",
                    help="Run weight sweep and plot the top combos.")
     p.add_argument("--no-plots", action="store_true",
@@ -90,6 +100,48 @@ def parse_args():
     p.add_argument("--output", default="models/ensemble.pkl")
     p.add_argument("--seed", type=int, default=42)
     return p.parse_args()
+
+
+# ---- Oversampling ----
+
+def apply_oversampler(X_train, y_train, args, target_names):
+    """Apply a SMOTE-family oversampler to the few-shot training set.
+
+    Note: in our setup train counts are already balanced (80/class). SMOTE
+    here is a literature comparison — it synthesizes feature-space neighbors
+    of each class to expand the training pool to `--smote-target` per class.
+    """
+    from imblearn.over_sampling import SMOTE, BorderlineSMOTE, ADASYN
+
+    counts = np.bincount(y_train)
+    min_count = int(counts.min())
+    k = max(1, min(args.smote_k, min_count - 1))
+    target = args.smote_target or int(counts.max())
+    strategy = {c: max(int(counts[c]), target) for c in range(len(counts))}
+
+    sampler_cls = {
+        "smote":      SMOTE,
+        "borderline": BorderlineSMOTE,
+        "adasyn":     ADASYN,
+    }[args.smote]
+
+    # ADASYN names its neighbor parameter `n_neighbors`; SMOTE family uses `k_neighbors`
+    nbr_kw = "n_neighbors" if args.smote == "adasyn" else "k_neighbors"
+    sampler = sampler_cls(
+        sampling_strategy=strategy,
+        random_state=args.seed,
+        **{nbr_kw: k},
+    )
+
+    X_aug, y_aug = sampler.fit_resample(X_train, y_train)
+    print(f"\n  Oversampler={args.smote}  k_neighbors={k}  target/class={target}")
+    print(f"  Train rows: {len(X_train)} -> {len(X_aug)}")
+    for i in range(len(counts)):
+        before = int(counts[i])
+        after = int((y_aug == i).sum())
+        if before != after:
+            print(f"    {target_names[i]:20s}: {before} -> {after}")
+    return X_aug.astype(np.float32), y_aug
 
 
 # ---- Model construction ----
@@ -115,6 +167,18 @@ def make_model(name: str, args, n_features: int, n_classes: int):
         )
     if name == "xgb":
         return build_model("xgb", random_state=args.seed)
+    if name == "reptile":
+        return build_model(
+            "reptile",
+            n_features=n_features,
+            embedding_dim=args.embedding_dim,
+            n_way=min(5, n_classes),
+            k_shot=args.k_shot,
+            n_query=args.n_query,
+            epochs=args.epochs,
+            epoch_size=args.epoch_size,
+            random_state=args.seed,
+        )
     raise ValueError(f"Unknown model: {name}")
 
 
@@ -402,6 +466,9 @@ def main():
         tr = int((y_train == i).sum())
         te = int((y_test == i).sum())
         print(f"    {target_names[i]:20s}: {tr} train / {te} test")
+
+    if args.smote != "none":
+        X_train, y_train = apply_oversampler(X_train, y_train, args, target_names)
 
     # Train models
     trained = {}
