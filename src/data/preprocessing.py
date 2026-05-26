@@ -90,13 +90,23 @@ def get_train_test_data(
     else:
         X = scaler.transform(X)
 
+    # Reserve a fraction of each class for test, so rare classes can't
+    # disappear from the test set when train_n_per_class is large. The
+    # reserve scales with class size: 25% of the class (so smaller classes
+    # don't get a 50-sample reserve that eats half their data). At low
+    # train_n this is a no-op (train fits inside class_size - reserve).
+    TEST_RESERVE_FRAC = 0.25
+
     train_indices = []
     test_indices = []
     rng = np.random.default_rng(random_state)
 
     for cls in np.unique(y):
         cls_idx = np.where(y == cls)[0]
-        n_train = min(train_n_per_class, len(cls_idx))
+        n_class = len(cls_idx)
+        reserve = max(1, int(n_class * TEST_RESERVE_FRAC))
+        max_train = n_class - reserve
+        n_train = min(train_n_per_class, max_train)
         chosen_train = rng.choice(cls_idx, size=n_train, replace=False)
         remaining = np.setdiff1d(cls_idx, chosen_train)
 

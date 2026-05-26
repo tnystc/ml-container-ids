@@ -25,7 +25,13 @@
       "Bash(tee /tmp/scarf_full.log)",
       "Bash(awk '/Weight sweep/,/^$/' /private/tmp/claude-501/-Users-tanaysutcu-Documents-METU-Research-codebase/3f324913-536f-46b3-8545-28b1e3ed887e/tasks/btubvaq26.output)",
       "Bash(awk '/^scarf \\\\\\(accuracy/,/macro avg/' /private/tmp/claude-501/-Users-tanaysutcu-Documents-METU-Research-codebase/3f324913-536f-46b3-8545-28b1e3ed887e/tasks/btubvaq26.output)",
-      "Bash(.venv/bin/python -m src.train --sample-frac 0.05 --test-n 200 --models reptile --epochs 1 --epoch-size 100 --no-plots)"
+      "Bash(.venv/bin/python -m src.train --sample-frac 0.05 --test-n 200 --models reptile --epochs 1 --epoch-size 100 --no-plots)",
+      "Bash(git mv *)",
+      "Bash(mv EXPERIMENT_LOG.md PROJECT_REPORT.md)",
+      "Bash(git rm *)",
+      "Bash(rm -f FINDINGS.md RECENT_RESULTS.md)",
+      "Bash(.venv/bin/python -c \"import src.train, src.labels, src.sampling, src.plotting; from src.models import list_models; print\\('imports OK, registry:', list_models\\(\\)\\)\")",
+      "Bash(.venv/bin/python -m src.train --sample-frac 0.05 --test-n 150 --label-config killchain --models rf gbdt xgb mlp --mlp-epochs 10 --sweep --plots-subdir _smoke)"
     ]
   }
 }
