@@ -53,6 +53,8 @@ def get_train_test_data(
     scaler: StandardScaler = None,
     train_n_per_class: int = FEW_SHOT_TRAIN_N,
     test_n_per_class: int = None,
+    train_n_large: int = None,
+    large_threshold: int = 500,
     random_state: int = 42,
     include_normal: bool = True,
     fit_scaler_on_all: bool = True,
@@ -104,9 +106,15 @@ def get_train_test_data(
     for cls in np.unique(y):
         cls_idx = np.where(y == cls)[0]
         n_class = len(cls_idx)
+        # Asymmetric downsampling: classes with abundant data can use a larger
+        # budget while rare classes stay at the few-shot cap.
+        if train_n_large is not None and n_class > large_threshold:
+            target_train = train_n_large
+        else:
+            target_train = train_n_per_class
         reserve = max(1, int(n_class * TEST_RESERVE_FRAC))
         max_train = n_class - reserve
-        n_train = min(train_n_per_class, max_train)
+        n_train = min(target_train, max_train)
         chosen_train = rng.choice(cls_idx, size=n_train, replace=False)
         remaining = np.setdiff1d(cls_idx, chosen_train)
 

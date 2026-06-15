@@ -1,10 +1,10 @@
 """
 Multi-class attack classification with a weighted ensemble.
 
-Best baseline is RF + XGB + Reptile on the 9-class setup (see PROJECT_REPORT.md
-for the full experimental record). ProtoNet and MLP are available as documented
-baselines but excluded by default because the weight sweep shows they're dead
-weight. Plots are generated automatically after evaluation unless --no-plots.
+Best baseline is RF + XGB + Reptile on the 9-class setup (see README.md for the
+results summary). ProtoNet and MLP are available as documented baselines but
+excluded by default because the weight sweep shows they're dead weight. Plots
+are generated automatically after evaluation unless --no-plots.
 
 Usage:
     # Best baseline (~10 min, 0.7503 / 0.60 macro F1)
@@ -44,6 +44,10 @@ def parse_args():
     p.add_argument("--train-n", type=int, default=80)
     p.add_argument("--test-n", type=int, default=500,
                    help="Balanced test samples per class. None = use all remaining.")
+    p.add_argument("--train-n-large", type=int, default=None,
+                   help="Asymmetric downsampling: training budget for classes "
+                        "with > 500 samples in the dataset (Normal/SSRF/Recon/"
+                        "kubelet/Nuclei). Rare classes still use --train-n.")
 
     p.add_argument("--no-normal", dest="include_normal", action="store_false",
                    help="Exclude the normal class (8-class mode).")
@@ -68,10 +72,12 @@ def parse_args():
     # MLP hyperparameters
     p.add_argument("--mlp-epochs", type=int, default=100)
 
-    # SMOTE-family oversampling (literature comparison; hurts — see PROJECT_REPORT.md)
-    p.add_argument("--smote", choices=["none", "smote", "borderline", "adasyn"],
+    # SMOTE-family oversampling (literature comparison; hurts — see README.md)
+    p.add_argument("--smote",
+                   choices=["none", "smote", "borderline", "adasyn", "random"],
                    default="none",
-                   help="Apply SMOTE-family oversampling to the few-shot training set.")
+                   help="Apply oversampling to the few-shot training set. "
+                        "`random` = naive replication (no synthesis).")
     p.add_argument("--smote-k", type=int, default=5,
                    help="k_neighbors for SMOTE/Borderline/ADASYN (clipped to "
                         "min_class_count - 1).")
@@ -174,6 +180,7 @@ def main():
 
     X_train, y_train, X_test, y_test, label_map, scaler = get_train_test_data(
         df, train_n_per_class=args.train_n, test_n_per_class=args.test_n,
+        train_n_large=args.train_n_large,
         random_state=args.seed, include_normal=args.include_normal,
         fit_scaler_on_all=args.scaler_all,
     )

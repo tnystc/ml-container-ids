@@ -3,7 +3,7 @@ Label naming and grouping presets for multi-class attack classification.
 
 `ORIG_LABEL_NAMES` maps original dataset label IDs to human-readable names.
 `LABEL_CONFIGS` holds the grouping/dropping presets used in the
-label-granularity ablation (see PROJECT_REPORT.md).
+label-granularity ablation (see README.md).
 
 `apply_label_config` applies a preset *after* the per-original-class few-shot
 train/test split, so each original class still gets `--train-n` samples and

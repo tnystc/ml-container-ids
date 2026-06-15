@@ -25,7 +25,7 @@ pip-wheel-metadata/
 # Jupyter / notebooks
 .ipynb_checkpoints/
 
-# OS/editor files
+# OS / editor files
 .DS_Store
 .vscode/
 .idea/
@@ -35,8 +35,9 @@ pip-wheel-metadata/
 .env.*
 *.local
 
-# Project data and model artifacts
-models/
+# Trained-model output directory ONLY (anchored to repo root so it does
+# not match the src/models/ source package)
+/models/
 *.pt
 *.pth
 *.pkl
@@ -46,9 +47,12 @@ models/
 dataset.csv
 *.csv
 
-# Documentation
-*.md
+# Generated plots
+/plots/
 
-# Plot artifacts
-plots.py
-plots/
+# Agent scaffolding and local-only research docs (kept on disk, not published)
+.claude/
+CLAUDE.md
+CLAUDE_NOTES.md
+CONTEXT.md
+PROJECT_REPORT.md
