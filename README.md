@@ -2,7 +2,7 @@
 
 Machine-learning intrusion detection for Kubernetes-based software-defined
 container networks, with a focus on **few-shot learning** for rare,
-CVE-based attack classes. Developed for TÜBİTAK 3501 project 120E537 at
+CVE-based attack classes. Developed at
 Middle East Technical University.
 
 The detection core is a **weighted ensemble of swappable classifiers** over
