@@ -21,8 +21,8 @@ well-supported classes — accuracy alone is misleading on this dataset.
 | Configuration | Classes | Accuracy | Macro F1 |
 |---|---|---|---|
 | XGBoost (best single model) | 9 (per-CVE) | 0.7453 | 0.60 |
-| **RF + XGB + Reptile ensemble** | 9 (per-CVE) | **0.7503** | **0.60** |
-| Asymmetric downsampling (`--train-n-large 500`) | 9 (per-CVE) | 0.8541 | **0.68** |
+| RF + XGB + Reptile ensemble | 9 (per-CVE) | 0.7503 | 0.60 |
+| Asymmetric downsampling (`--train-n-large 500`) | 9 (per-CVE) | 0.8541 | 0.68 |
 | Kill-chain stage grouping | 4 supergroups | 0.8501 | 0.84 |
 | Kill-chain + asymmetric downsampling | 4 supergroups | 0.8947 | 0.88 |
 
@@ -129,9 +129,3 @@ src/
 3. Add a construction branch to `make_model` in `src/train.py`.
 4. Run with `--models yourname`.
 
-## Acknowledgement
-
-Supported by TÜBİTAK 3501 project 120E537,
-*"High-Performance Intrusion Detection and Prevention Architecture for
-Software-Defined Container Networks in the Cloud"*, Middle East Technical
-University.
