@@ -50,9 +50,12 @@ dataset.csv
 # Generated plots
 /plots/
 
-# Agent scaffolding and local-only research docs (kept on disk, not published)
+# Agent scaffolding (kept on disk, not published)
 .claude/
-CLAUDE.md
-CLAUDE_NOTES.md
-CONTEXT.md
-PROJECT_REPORT.md
+
+# Only README.md is published; every other markdown doc is local-only
+*.md
+!README.md
+
+# Local-only result dumps and logs
+PAPER_RESULTS_raw*.txt

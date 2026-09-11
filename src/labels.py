@@ -49,6 +49,22 @@ LABEL_CONFIGS = {
         "names": ["Normal", "Reconnaissance", "Exploitation", "Container Escape"],
     },
 
+    # Kill-chain grouping restricted to the 6-class (drop3) subset: first drop
+    # the failing rare classes (RCE/Escape/runc), then fold the surviving six
+    # classes into their kill-chain stages. Use this for kill-chain results that
+    # must stay consistent with the drop3 experiments (same six classes, coarser
+    # granularity). Container Escape here is kubelet symlink only.
+    "killchain6": {
+        "drop": [3, 4, 7],
+        "groups": {
+            0: 0,                          # Normal
+            2: 1, 11: 1,                   # Reconnaissance (Node-RED Recon, Nuclei)
+            1: 2, 6: 2,                    # Exploitation (Grafana SSRF, InfluxDB JWT)
+            8: 3,                          # Container Escape (kubelet symlink)
+        },
+        "names": ["Normal", "Reconnaissance", "Exploitation", "Container Escape"],
+    },
+
     # Group by attacked service (6 classes).
     "by-service": {
         "drop": [],
